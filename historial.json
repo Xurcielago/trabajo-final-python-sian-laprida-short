@@ -1,0 +1,8 @@
+[
+    {
+        "fecha": "2026-11-13T09:49:24.537880",
+        "pregunta": "¿Cuál fue el producto más vendido durante septiembre?",
+        "sql_ejecutado": "SELECT producto, SUM(cantidad) as total_cantidad FROM valhalla_ventas.csv WHERE strftime('%m', fecha) = '09' GROUP BY producto ORDER BY total_cantidad DESC LIMIT 1",
+        "resultado": "Cargador USB-C 25W con un total de 35415 unidades vendidas"
+    }
+]
