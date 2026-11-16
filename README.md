@@ -1,35 +1,39 @@
 # Agent ADK - Analista de Datos Valhalla S.A.
 
-Este repositorio contiene la solución al trabajo final de la materia. Se trata de un **Agente de Inteligencia Artificial** desarrollado en Python con **Google Agent Development Kit (ADK)**. El agente actúa como un Analista de Datos Senior para la empresa ficticia Valhalla S.A., permitiendo a usuarios de negocio consultar información empresarial en lenguaje natural sin necesidad de saber SQL.
+Agente de Inteligencia Artificial desarrollado en Python con **Google Agent Development Kit (ADK)** para resolver la democratización del acceso a datos empresariales de **Valhalla S.A.** Permite a usuarios de negocio consultar información en lenguaje natural sin necesidad de conocimientos de programación o SQL.
 
 ## Características Principales
 
-* **Modelo Local**: Utiliza `qwen3.5:4b` ejecutado localmente a través de **Ollama**, garantizando privacidad y funcionamiento sin costos de API.
-* **Motor de Base de Datos**: Emplea **DuckDB**, una base de datos analítica en memoria ultrarrápida que lee archivos `.csv` y `.parquet` directamente.
-* **Seguridad de Nivel de Producción**: El agente está protegido contra **Prompt Injections** (por sus instrucciones) y **SQL Injections** (por el código de Python).
+* **Modelo Local:** Utiliza `qwen3.5:4b` ejecutado localmente mediante **Ollama**, garantizando privacidad de los datos y ejecución sin costos de API.
+* **Motor Analítico Multi-formato:** Emplea **DuckDB** en memoria para inspeccionar y consultar dinámicamente archivos `.csv`, `.parquet` y `.json` alojados en la carpeta `datos/`.
+* **Seguridad de Solo Lectura:** Restringe las consultas a sentencias `SELECT` y `WITH`, bloquea comandos de escritura o acceso al sistema de archivos mediante expresiones regulares, aísla las rutas dentro de `datos/` e incluye directivas anti-*Prompt Injection*.
+* **Trazabilidad e Historial:** Expone al usuario las fuentes y consultas SQL ejecutadas en cada respuesta y registra la auditoría completa en `historial.json`.
 
 ## Tecnologías Utilizadas
 
 * **Python 3.10+**
-* **Google ADK**: Framework de orquestación de agentes.
-* **LiteLLM**: Adaptador para conectar ADK con Ollama.
-* **Ollama**: Motor de inferencia local (`qwen3.5:4b`).
-* **DuckDB**: Motor SQL en memoria.
-* **Pandas**: Manipulación de datos y formateo de salida.
+* **Google ADK:** Framework de orquestación de agentes.
+* **LiteLLM:** Adaptador para conectar Google ADK con modelos locales de Ollama.
+* **Ollama:** Motor de inferencia local (`qwen3.5:4b`).
+* **DuckDB:** Motor SQL analítico en memoria.
+* **Pandas:** Formateo de resultados tabulares.
 
 ## Estructura del Proyecto
 
-agent_adk_valhalla_tunombre/  
-│  
+```text  
+trabajo-final-python-sian-laprida-short/  
 ├── agent/  
 │   ├── __init__.py  
-│   ├── agent.py          # Configuración del agente, rol y modelo  
-│   └── tools.py          # Código de las 3 herramientas de Python  
-│  
-├── valhalla_ventas.csv   # Archivo de datos  
-├── historial.json        # Se genera automáticamente al usar el agente  
-├── requirements.txt      # Dependencias del proyecto  
-└── README.md             # Este archivo  
+│   └── agent.py              # Configuración del agente, instrucciones y herramientas  
+├── tools/  
+│   └── tools.py              # Implementación de las 5 herramientas en Python  
+├── datos/                    # Carpeta con las fuentes de datos (.csv, .parquet, .json)  
+│   ├── valhalla_ventas.csv  
+│   └── valhalla_clientes.parquet  
+├── historial.json            # Registro de trazabilidad generado automáticamente  
+├── requirements.txt          # Dependencias del proyecto  
+├── .gitignore  
+└── README.md  
 
 
 ## Instalación y uso
@@ -39,6 +43,7 @@ git clone https://github.com/Xurcielago/trabajo-final-python-sian-laprida-short.
 ## Crear entorno virtual
 uv venv env
 ## Activar entorno y dependencias (Windows)
+uv pip install -r requirements.txt  
 env\Scripts\activate  
 uv pip install google-adk litellm duckdb pandas  
 ollama pull qwen3.5:4b  

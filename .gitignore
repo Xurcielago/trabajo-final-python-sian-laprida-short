@@ -1,3 +1,4 @@
 env/
+datos/
 valhalla_ventas.csv
 valhalla_ventas.parquet
