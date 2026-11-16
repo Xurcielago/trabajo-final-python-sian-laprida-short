@@ -11,5 +11,33 @@
         "fuentes_utilizadas": "valhalla_ventas.csv",
         "sql_ejecutado": "SELECT producto, SUM(cantidad) as total_ventas FROM 'valhalla_ventas.csv' WHERE EXTRACT(MONTH FROM fecha) = 9 GROUP BY producto ORDER BY total_ventas DESC LIMIT 1",
         "resultado": "El producto más vendido durante septiembre fue Cargador USB-C 25W, con un total de 35,415 unidades vendidas."
+    },
+    {
+        "fecha": "2026-11-16T13:57:00.984994",
+        "pregunta": "¿Cuál fue el comportamiento de las ventas durante los últimos seis meses?",
+        "fuentes_utilizadas": "valhalla_ventas.csv",
+        "sql_ejecutado": "SELECT DATE_TRUNC('month', fecha) AS mes, COUNT(*) AS numero_ventas, SUM(cantidad) AS total_cantidad, SUM(total) AS total_ventas FROM 'valhalla_ventas.csv' GROUP BY mes ORDER BY mes DESC",
+        "resultado": "El comportamiento de las ventas durante los últimos seis meses muestra un patrón de estabilidad con variaciones moderadas entre meses.\n\n**Análisis por Mes (Dic 2025 - Jun 2025):**\n\n| Mes     | Ventas | Cantidad Total   | Monto Total    |\n|---------|--------|------------------|----------------|\n| Dic 2025| 84,756 | 253,758         | $50.9B        |\n| Nov 2025| 81,965 | 245,970         | $49.1B        |\n| Oct 2025| 84,740 | 254,949         | $51.1B        |\n| Sep 2025| 82,065 | 246,259         | $"
+    },
+    {
+        "fecha": "2026-11-16T14:25:56.312276",
+        "pregunta": "¿Cuál fue el comportamiento de las ventas durante los últimos seis meses?",
+        "fuentes_utilizadas": "valhalla_ventas.csv",
+        "sql_ejecutado": "SELECT \n    DATE_TRUNC('month', fecha) AS mes_ventas,\n    COUNT(*) AS total_ventas,\n    SUM(cantidad) AS cantidad_total,\n    SUM(total) AS monto_total,\n    AVG(precio_unitario) AS precio_promedio,\n    AVG(descuento) AS descuento_promedio\nFROM 'valhalla_ventas.csv'\nWHERE fecha >= CURRENT_DATE - INTERVAL '6 months'\nGROUP BY DATE_TRUNC('month', fecha)\nORDER BY mes_ventas DESC",
+        "resultado": "La consulta se ejecutó correctamente pero no devolvió ningún dato (0 filas)."
+    },
+    {
+        "fecha": "2026-11-16T14:26:33.355734",
+        "pregunta": "¿Cuál fue el comportamiento de las ventas durante los últimos seis meses?",
+        "fuentes_utilizadas": "valhalla_ventas.csv",
+        "sql_ejecutado": "SELECT MIN(fecha) AS fecha_min, MAX(fecha) AS fecha_max, COUNT(*) AS total_registros FROM 'valhalla_ventas.csv'",
+        "resultado": "Resultado (1 filas):\n fecha_min  fecha_max  total_registros\n2025-01-01 2025-12-31          1000000"
+    },
+    {
+        "fecha": "2026-11-16T14:27:21.309136",
+        "pregunta": "¿Cuál fue el comportamiento de las ventas durante los últimos seis meses?",
+        "fuentes_utilizadas": "valhalla_ventas.csv",
+        "sql_ejecutado": "SELECT \n    DATE_TRUNC('month', fecha) AS mes_ventas,\n    COUNT(*) AS total_ventas,\n    SUM(cantidad) AS cantidad_total,\n    SUM(total) AS monto_total,\n    AVG(precio_unitario) AS precio_promedio,\n    AVG(descuento) AS descuento_promedio\nFROM 'valhalla_ventas.csv'\nWHERE fecha >= '2025-07-01' AND fecha <= '2025-12-31'\nGROUP BY DATE_TRUNC('month', fecha)\nORDER BY mes_ventas DESC",
+        "resultado": "Resultado (6 filas):\nmes_ventas  total_ventas  cantidad_total  monto_total  precio_promedio  descuento_promedio\n2025-12-01         84756        253758.0 5.092457e+10    216892.078437            0.071276\n2025-11-01         81965        245970.0 4.909507e+10    215292.344293            0.071586\n2025-10-01         84740        254949.0 5.111615e+10    215585.803635            0.071246\n2025-09-01         82065        246259.0 4.912928e+10    215014.646926            0.071317\n2025-08-01         85142"
     }
 ]
