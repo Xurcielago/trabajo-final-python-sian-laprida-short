@@ -6,6 +6,7 @@ import datetime
 
 CARPETA_DATOS = "datos"
 EXTENSIONES_PERMITIDAS = (".csv", ".parquet", ".json")
+ARCHIVO_HISTORIAL = "historial.json"
 
 def _validar_archivo(nombre_archivo: str) -> tuple[bool, str]:
     """Verifica que el archivo exista dentro de CARPETA_DATOS y tenga una extensión permitida."""
@@ -62,61 +63,129 @@ def inspeccionar_fuente_de_datos(nombre_archivo: str) -> str:
     except Exception as e:
         return f"ERROR al inspeccionar '{nombre_archivo}': {str(e)}"
 
+
+def _resolver_rutas_en_sql(consulta_sql: str) -> tuple[bool, str]:
+    """Valida las referencias a archivos dentro del SQL y las apunta a CARPETA_DATOS."""
+    tokens_entre_comillas = re.findall(r"'([^']*)'", consulta_sql)
+    sql_procesado = consulta_sql
+
+    for token in tokens_entre_comillas:
+        parece_ruta = (
+            ".." in token
+            or token.startswith(("/", "\\"))
+            or bool(re.match(r"^[a-zA-Z]:", token))
+            or bool(re.search(r"\.[a-zA-Z0-9]{2,7}$", token))
+        )
+        if parece_ruta:
+            es_valido, ruta_o_error = _validar_archivo(token)
+            if not es_valido:
+                return False, ruta_o_error
+            ruta_duckdb = ruta_o_error.replace("\\", "/")
+            sql_procesado = sql_procesado.replace(f"'{token}'", f"'{ruta_duckdb}'")
+
+    return True, sql_procesado
+
 def ejecutar_consulta_segura(consulta_sql: str) -> str:
     """
-    Herramienta para ejecutar consultas SQL de solo lectura (SELECT) sobre los datos.
+    Ejecuta consultas SQL de solo lectura (SELECT o WITH) sobre los archivos de datos.
     Args:
-        consulta_sql: str -> La consulta SQL generada.
+        consulta_sql: Consulta SQL usando el nombre del archivo (ej. 'valhalla_ventas.csv').
     """
-    # 1. SEGURIDAD
-    sql_upper = consulta_sql.upper()
-    comandos_prohibidos = ["DROP", "DELETE", "UPDATE", "INSERT", "ALTER", "TRUNCATE", "CREATE"]
-    
-    for comando in comandos_prohibidos:
-        if comando in sql_upper:
-            return f"ERROR DE SEGURIDAD: El comando '{comando}' está prohibido. Solo se permiten consultas SELECT."
-            
-    if not sql_upper.strip().startswith("SELECT") and not sql_upper.strip().startswith("WITH"):
+    sql_limpio = consulta_sql.strip().rstrip(";")
+    if ";" in sql_limpio:
+        return "ERROR DE SEGURIDAD: No se permiten múltiples sentencias SQL."
+
+    sql_upper = sql_limpio.upper()
+    if not sql_upper.startswith(("SELECT", "WITH")):
         return "ERROR DE SEGURIDAD: La consulta debe comenzar con SELECT o WITH."
 
-    # 2. EJECUCIÓN
+    comandos_prohibidos = [
+        "DROP", "DELETE", "UPDATE", "INSERT", "ALTER", "TRUNCATE",
+        "CREATE", "COPY", "ATTACH", "DETACH", "EXPORT", "PRAGMA",
+        "INSTALL", "LOAD", "GLOB", "READ_TEXT", "READ_BLOB"
+    ]
+    for comando in comandos_prohibidos:
+        if re.search(rf"\b{comando}\b", sql_upper):
+            return f"ERROR DE SEGURIDAD: El comando '{comando}' está prohibido."
+
+    es_ruta_valida, sql_final = _resolver_rutas_en_sql(sql_limpio)
+    if not es_ruta_valida:
+        return sql_final
+
     try:
-        conn = duckdb.connect(':memory:')
-        resultado = conn.execute(consulta_sql).df()
-        
+        conn = duckdb.connect(":memory:")
+        resultado = conn.execute(sql_final).df()
+
         if resultado.empty:
             return "La consulta se ejecutó correctamente pero no devolvió ningún dato (0 filas)."
-            
-        # Máximo 20 filas
+
         if len(resultado) > 20:
             texto = resultado.head(20).to_string(index=False)
             return f"Resultado (Mostrando las primeras 20 de {len(resultado)} filas):\n{texto}"
-        else:
-            return f"Resultado ({len(resultado)} filas):\n{resultado.to_string(index=False)}"
-            
-    except Exception as e:
-        return f"ERROR en la consulta SQL: {str(e)}. Revisa los nombres de las tablas y columnas."
 
-def guardar_historial(pregunta: str, consulta_sql: str, respuesta: str) -> str:
-    """Guarda la trazabilidad de la consulta en un archivo JSON."""
+        return f"Resultado ({len(resultado)} filas):\n{resultado.to_string(index=False)}"
+    except Exception as e:
+        return f"ERROR en la consulta SQL: {str(e)}. Verifica los nombres de archivos y columnas."
+
+def guardar_historial(pregunta: str, fuentes_utilizadas: str, consulta_sql: str, respuesta: str) -> str:
+    """
+    Guarda la trazabilidad de una consulta en historial.json (RF08).
+    Args:
+        pregunta: Pregunta original del usuario.
+        fuentes_utilizadas: Archivos consultados (ej. 'valhalla_ventas.csv').
+        consulta_sql: Consulta SQL ejecutada.
+        respuesta: Resumen de la respuesta entregada.
+    """
     try:
         entrada = {
             "fecha": datetime.datetime.now().isoformat(),
             "pregunta": pregunta,
+            "fuentes_utilizadas": fuentes_utilizadas,
             "sql_ejecutado": consulta_sql,
             "resultado": respuesta[:500]
         }
-        
+
         historial = []
-        if os.path.exists("historial.json"):
-            with open("historial.json", "r", encoding="utf-8") as f:
+        if os.path.exists(ARCHIVO_HISTORIAL):
+            with open(ARCHIVO_HISTORIAL, "r", encoding="utf-8") as f:
                 historial = json.load(f)
-                
+
         historial.append(entrada)
-        
-        with open("historial.json", "w", encoding="utf-8") as f:
+
+        with open(ARCHIVO_HISTORIAL, "w", encoding="utf-8") as f:
             json.dump(historial, f, indent=4, ensure_ascii=False)
-            
-        return "ÉXITO: La consulta ha sido registrada en el historial de trazabilidad."
+
+        return "ÉXITO: Consulta registrada en el historial de trazabilidad."
     except Exception as e:
         return f"ERROR al guardar el historial: {str(e)}"
+
+def consultar_historial(limite: int = 5) -> str:
+    """
+    Consulta las últimas preguntas y resultados guardados en historial.json (RF10).
+    Args:
+        limite: Cantidad máxima de registros recientes a mostrar (por defecto 5).
+    """
+    if not os.path.exists(ARCHIVO_HISTORIAL):
+        return "Aún no existe un historial de consultas registradas."
+
+    try:
+        with open(ARCHIVO_HISTORIAL, "r", encoding="utf-8") as f:
+            historial = json.load(f)
+
+        if not historial:
+            return "El historial de consultas está vacío."
+
+        ultimas = historial[-limite:]
+        registros = []
+        for i, item in enumerate(reversed(ultimas), start=1):
+            registros.append(
+                f"{i}. [{item.get('fecha', 'Sin fecha')}]\n"
+                f"   Pregunta: {item.get('pregunta', '')}\n"
+                f"   Fuentes: {item.get('fuentes_utilizadas', 'No registradas')}\n"
+                f"   SQL: {item.get('sql_ejecutado', '')}\n"
+                f"   Resultado: {item.get('resultado', '')}"
+            )
+
+        return "Últimas consultas registradas:\n\n" + "\n\n".join(registros)
+    except Exception as e:
+        return f"ERROR al leer el historial: {str(e)}"
