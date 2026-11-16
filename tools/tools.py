@@ -38,7 +38,7 @@ def listar_fuentes_disponibles() -> str:
 
     if not archivos:
         return f"No hay fuentes de datos disponibles en '{CARPETA_DATOS}'."
-
+    
     lista_formateada = "\n".join(f"- {archivo}" for archivo in sorted(archivos))
     return f"Fuentes de datos disponibles:\n{lista_formateada}"
 
