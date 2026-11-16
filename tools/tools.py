@@ -1,32 +1,66 @@
 import duckdb
+import re
 import json
 import os
 import datetime
 
-# Nombres exactos de tus archivos
-ARCHIVOS_DISPONIBLES = ["valhalla_ventas.csv", "valhalla_clientes.parquet"]
+CARPETA_DATOS = "datos"
+EXTENSIONES_PERMITIDAS = (".csv", ".parquet", ".json")
 
-def inspeccionar_fuente_de_datos(ruta_archivo: str) -> str:
+def _validar_archivo(nombre_archivo: str) -> tuple[bool, str]:
+    """Verifica que el archivo exista dentro de CARPETA_DATOS y tenga una extensión permitida."""
+    # Evita que se acceda a rutas fuera de la carpeta datos (ej. '../agent/agent.py')
+    if os.path.basename(nombre_archivo) != nombre_archivo:
+        return False, "ERROR DE SEGURIDAD: Solo se permite el nombre del archivo, sin rutas."
+
+    if not nombre_archivo.lower().endswith(EXTENSIONES_PERMITIDAS):
+        return False, f"ERROR: Formato no soportado. Usa {EXTENSIONES_PERMITIDAS}."
+
+    ruta_completa = os.path.join(CARPETA_DATOS, nombre_archivo)
+    if not os.path.isfile(ruta_completa):
+        return False, f"ERROR: El archivo '{nombre_archivo}' no existe en la carpeta '{CARPETA_DATOS}'."
+
+    return True, ruta_completa
+
+def listar_fuentes_disponibles() -> str:
     """
-    Herramienta para inspeccionar la estructura de un archivo de datos.
+    Lista los archivos de datos disponibles (CSV, Parquet, JSON) en la carpeta de datos.
+    """
+    if not os.path.exists(CARPETA_DATOS):
+        os.makedirs(CARPETA_DATOS)
+        return f"La carpeta '{CARPETA_DATOS}' estaba vacía y acaba de crearse. Agrega archivos allí."
+
+    archivos = [
+        f for f in os.listdir(CARPETA_DATOS)
+        if f.lower().endswith(EXTENSIONES_PERMITIDAS) and os.path.isfile(os.path.join(CARPETA_DATOS, f))
+    ]
+
+    if not archivos:
+        return f"No hay fuentes de datos disponibles en '{CARPETA_DATOS}'."
+
+    lista_formateada = "\n".join(f"- {archivo}" for archivo in sorted(archivos))
+    return f"Fuentes de datos disponibles:\n{lista_formateada}"
+
+def inspeccionar_fuente_de_datos(nombre_archivo: str) -> str:
+    """
+    Inspecciona la estructura de un archivo de datos (CSV, Parquet o JSON).
     Devuelve los nombres de las columnas y sus tipos de datos.
     Args:
-        ruta_archivo: str -> Nombre del archivo (ej. 'valhalla_ventas.csv').
+        nombre_archivo: Nombre del archivo (ej. 'valhalla_ventas.csv').
     """
-    if ruta_archivo not in ARCHIVOS_DISPONIBLES:
-        return f"ERROR: El archivo '{ruta_archivo}' no está autorizado."
-    
+    es_valido, resultado_ruta = _validar_archivo(nombre_archivo)
+    if not es_valido:
+        return resultado_ruta
+
     try:
-        conn = duckdb.connect(':memory:')
-        # DuckDB 'DESCRIBE' que lee la estructura
-        query = f"DESCRIBE SELECT * FROM '{ruta_archivo}'"
+        conn = duckdb.connect(":memory:")
+        query = f"DESCRIBE SELECT * FROM '{resultado_ruta}'"
         resultado = conn.execute(query).df()
-        
-        # Respuesta Formateada
-        columnas = resultado[['column_name', 'column_type']].to_string(index=False)
-        return f"ÉXITO. Estructura del archivo '{ruta_archivo}':\n{columnas}"
+
+        columnas = resultado[["column_name", "column_type"]].to_string(index=False)
+        return f"ÉXITO. Estructura de '{nombre_archivo}':\n{columnas}"
     except Exception as e:
-        return f"ERROR al inspeccionar: {str(e)}"
+        return f"ERROR al inspeccionar '{nombre_archivo}': {str(e)}"
 
 def ejecutar_consulta_segura(consulta_sql: str) -> str:
     """
