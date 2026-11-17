@@ -39,5 +39,12 @@
         "fuentes_utilizadas": "valhalla_ventas.csv",
         "sql_ejecutado": "SELECT \n    DATE_TRUNC('month', fecha) AS mes_ventas,\n    COUNT(*) AS total_ventas,\n    SUM(cantidad) AS cantidad_total,\n    SUM(total) AS monto_total,\n    AVG(precio_unitario) AS precio_promedio,\n    AVG(descuento) AS descuento_promedio\nFROM 'valhalla_ventas.csv'\nWHERE fecha >= '2025-07-01' AND fecha <= '2025-12-31'\nGROUP BY DATE_TRUNC('month', fecha)\nORDER BY mes_ventas DESC",
         "resultado": "Resultado (6 filas):\nmes_ventas  total_ventas  cantidad_total  monto_total  precio_promedio  descuento_promedio\n2025-12-01         84756        253758.0 5.092457e+10    216892.078437            0.071276\n2025-11-01         81965        245970.0 4.909507e+10    215292.344293            0.071586\n2025-10-01         84740        254949.0 5.111615e+10    215585.803635            0.071246\n2025-09-01         82065        246259.0 4.912928e+10    215014.646926            0.071317\n2025-08-01         85142"
+    },
+    {
+        "fecha": "2026-11-16T23:57:55.109361",
+        "pregunta": "¿Cuál es el producto más vendido durante septiembre (2025)?",
+        "fuentes_utilizadas": "valhalla_ventas.csv",
+        "sql_ejecutado": "SELECT producto, SUM(cantidad) as total_vendido\nFROM 'valhalla_ventas.csv'\nWHERE fecha >= '2025-09-01' AND fecha <= '2025-09-30'\nGROUP BY producto\nORDER BY total_vendido DESC\nLIMIT 1",
+        "resultado": "Resultado (1 filas):\n          producto  total_vendido\nCargador USB-C 25W        35415.0"
     }
 ]
