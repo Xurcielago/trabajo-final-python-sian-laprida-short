@@ -46,5 +46,40 @@
         "fuentes_utilizadas": "valhalla_ventas.csv",
         "sql_ejecutado": "SELECT producto, SUM(cantidad) as total_vendido\nFROM 'valhalla_ventas.csv'\nWHERE fecha >= '2025-09-01' AND fecha <= '2025-09-30'\nGROUP BY producto\nORDER BY total_vendido DESC\nLIMIT 1",
         "resultado": "Resultado (1 filas):\n          producto  total_vendido\nCargador USB-C 25W        35415.0"
+    },
+    {
+        "fecha": "2026-11-17T10:20:12.159094",
+        "pregunta": "¿Cuál es el producto más vendido durante septiembre (2025)?",
+        "fuentes_utilizadas": "valhalla_ventas.csv",
+        "sql_ejecutado": "SELECT producto, SUM(cantidad) as total_vendidos\nFROM 'valhalla_ventas.csv'\nWHERE fecha >= '2025-09-01' AND fecha <= '2025-09-30'\nGROUP BY producto\nORDER BY total_vendidos DESC\nLIMIT 1",
+        "resultado": "Resultado (1 filas):\n          producto  total_vendidos\nCargador USB-C 25W         35415.0"
+    },
+    {
+        "fecha": "2026-11-17T10:22:44.844372",
+        "pregunta": "¿Cuál es el producto más vendido durante septiembre (2025)?",
+        "fuentes_utilizadas": "valhalla_ventas.csv",
+        "sql_ejecutado": "SELECT producto, SUM(cantidad) as cantidad_total\nFROM 'valhalla_ventas.csv'\nWHERE fecha >= '2025-09-01' AND fecha <= '2025-09-30'\nGROUP BY producto\nORDER BY cantidad_total DESC\nLIMIT 1",
+        "resultado": "Resultado (1 filas):\n          producto  cantidad_total\nCargador USB-C 25W         35415.0"
+    },
+    {
+        "fecha": "2026-11-17T10:40:25.060927",
+        "pregunta": "¿Qué categoría generó mayores ingresos durante el último trimestre?",
+        "fuentes_utilizadas": "valhalla_ventas.csv",
+        "sql_ejecutado": "SELECT categoria, SUM(total) as ingresos_totales, COUNT(*) as numero_ventas\nFROM 'valhalla_ventas.csv'\nWHERE fecha >= CURRENT_DATE - INTERVAL '3 months'\nGROUP BY categoria\nORDER BY ingresos_totales DESC\nLIMIT 10",
+        "resultado": "La consulta se ejecutó correctamente pero no devolvió ningún dato (0 filas)."
+    },
+    {
+        "fecha": "2026-11-17T10:41:03.169651",
+        "pregunta": "¿Qué categoría generó mayores ingresos durante el último trimestre?",
+        "fuentes_utilizadas": "valhalla_ventas.csv",
+        "sql_ejecutado": "SELECT MIN(fecha) as fecha_min, MAX(fecha) as fecha_max, COUNT(*) as total_ventas\nFROM 'valhalla_ventas.csv'",
+        "resultado": "Resultado (1 filas):\n fecha_min  fecha_max  total_ventas\n2025-01-01 2025-12-31       1000000"
+    },
+    {
+        "fecha": "2026-11-17T10:42:02.603329",
+        "pregunta": "¿Qué categoría generó mayores ingresos durante el último trimestre?",
+        "fuentes_utilizadas": "valhalla_ventas.csv",
+        "sql_ejecutado": "SELECT categoria, SUM(total) as ingresos_totales, COUNT(*) as numero_ventas\nFROM 'valhalla_ventas.csv'\nWHERE fecha >= '2025-10-01' AND fecha <= '2025-12-31'\nGROUP BY categoria\nORDER BY ingresos_totales DESC\nLIMIT 10",
+        "resultado": "Resultado (7 filas):\n     categoria  ingresos_totales  numero_ventas\n   Informatica      6.990746e+10          41539\n     Telefonia      4.534728e+10          29259\n    Accesorios      1.101170e+10          97609\n         Audio      7.704608e+09          34266\nAlmacenamiento      7.294284e+09          21856\n   Perifericos      5.338427e+09           9823\n   Componentes      4.532022e+09          17109"
     }
 ]

@@ -47,7 +47,7 @@ env\Scripts\activate
 uv pip install -r requirements.txt
 ollama pull qwen3.5:4b
 adk web
-
+streamlit run app.py
 
 ## Herramientas del Agente
 El agente tiene a su disposición 3 herramientas con responsabilidades específicas:

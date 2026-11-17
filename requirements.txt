@@ -2,3 +2,4 @@ google-adk
 litellm
 duckdb
 pandas
+streamlit
